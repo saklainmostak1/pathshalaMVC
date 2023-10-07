@@ -106,6 +106,8 @@ export default function AdminPageList() {
             })
                 .then(res => res.json())
                 .then(data => {
+
+                   
                     if (data.insertId) {
                         setError('')
                         Swal.fire({

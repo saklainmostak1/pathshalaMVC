@@ -6,28 +6,33 @@ import Dropdown from 'react-bootstrap/Dropdown';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faKey, faSignOutAlt, faUserEdit } from '@fortawesome/free-solid-svg-icons';
 import Link from 'next/link';
-import AdminPageList from '../../admin/admin_page_list_create/page';
+import { FaAngleDown, FaAngleRight } from 'react-icons/fa';
+
 
 const AdminSidebar = ({ isSidebarActive }) => {
 
     const [adminList, setAdminList] = useState([])
+    const [menuTypeArr, setMenuTypeArr] = useState([])
     const [display_name_arr, setDisplay_name_arr] = useState([])
     const [displayNameArr, setDisplayNameArr] = useState([])
     const [selectArr, setSelectArr] = useState([])
+    const [methodName, setMethodName] = useState([])
     const [toggleStates1, setToggleStates1] = useState(Array(display_name_arr.length).fill(false));
     const [toggleStates2, setToggleStates2] = useState(Array(display_name_arr.length).fill(false));
-    
+
 
     useEffect(() => {
         fetchAdminData();
     }, []);
-    // AdminPageList()
-    
+   
+    console.log(toggleStates1);
+
 
     const fetchAdminData = async () => {
         try {
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/allAdmin`);
             const jsonData = await response.json();
+
             const allParent = jsonData?.filter(p => (p?.parent_id) === 0)
             setAdminList(allParent)
 
@@ -61,6 +66,10 @@ const AdminSidebar = ({ isSidebarActive }) => {
             setDisplayNameArr([...outputArray]);
             // daynamic work end  
 
+
+            const menuType = jsonData?.filter(m => ((m?.menu_type === 1) && (m?.parent_id !== 0)))
+            setMenuTypeArr(menuType);
+
         } catch (error) {
             console.error('Error fetching data:', error);
         }
@@ -70,20 +79,23 @@ const AdminSidebar = ({ isSidebarActive }) => {
     function selectIndex1(index) {
         const Management = adminList?.filter(a => (a?.page_group === display_name_arr[index]))
         setSelectArr(Management)
-        
+
         const newToggleStates = [...toggleStates1];
         newToggleStates[index] = !newToggleStates[index];
         setToggleStates1(newToggleStates);
 
     }
 
-    function selectIndex2(index) {
+    function selectIndex2(index, displayName) {
         const newToggleStates = [...toggleStates2];
         newToggleStates[index] = !newToggleStates[index];
         setToggleStates2(newToggleStates);
-
+        const displayNameSame = adminList?.filter(d => (d?.display_name === displayName))
+        const method = menuTypeArr?.filter(m => m?.controller_name === displayNameSame[0]?.controller_name)
+        setMethodName(method);
     }
 
+    
     return (
         <nav id="sidebar" className={`sidebar ${isSidebarActive ? 'active' : ''} `} >
             <div className="sidebar-header mt-2">
@@ -134,11 +146,11 @@ const AdminSidebar = ({ isSidebarActive }) => {
                                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); selectIndex1(index); }}
                             >
                                 {data}
-                                <span style={{ position: 'absolute', right: '10px' }}>
+                                <span style={{ position: 'absolute', right: '8px' }}>
                                     {toggleStates1[index] ? (
-                                        <i class="caret-down pt-1 fas fa-angle-down"></i>
+                                        <FaAngleDown className="caret-down pt-1" />
                                     ) : (
-                                        <i class="caret-right pt-1 fas fa-angle-right "></i>
+                                        <FaAngleRight className="caret-right pt-1" />
                                     )}
                                 </span>
                             </a>
@@ -151,30 +163,30 @@ const AdminSidebar = ({ isSidebarActive }) => {
                                                 data-toggle="collapse"
                                                 aria-expanded="false"
                                                 style={{ position: 'relative' }}
-                                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); selectIndex2( innerIndex); }}
+                                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); selectIndex2(innerIndex, item?.display_name); }}
                                             >
                                                 {item?.display_name}
 
-                                                <span style={{ position: 'absolute', right: '10px' }}>
+                                                <span style={{ position: 'absolute', right: '8px' }}>
                                                     {toggleStates2[innerIndex] ? (
-                                                        <i className="caret-down pt-1 fas fa-angle-down"></i>
+                                                       <FaAngleDown className="caret-down pt-1" />
                                                     ) : (
-                                                        <i className="caret-right pt-1 fas fa-angle-right "></i>
+                                                        <FaAngleRight className="caret-right pt-1" />
                                                     )}
                                                 </span>
                                             </a>
 
                                             <ul className="collapse list-unstyled " id={`${item?.controller_name}_${index}_${innerIndex}`} >
-                                                <li className='borderStyle1' style={{ background: '#314B81' }}>
-                                                    <Link href="/Admin/admin_page_list/admin_page_list_create">
-                                                        {item?.display_name} Create
-                                                    </Link>
-                                                </li>
-                                                <li className='borderStyle1' style={{ background: '#314B81' }}>
-                                                    <Link href="/Admin/admin_page_list/admin_page_list_create">
-                                                        {item?.display_name} List
-                                                    </Link>
-                                                </li>
+                                              
+                                                    {
+                                                        methodName?.map(m => (
+                                                            <li className='borderStyle1' style={{ background: '#314B81' }} key={m?.id}>
+                                                            <Link  href="/Admin/admin_page_list/admin_page_list_create">
+                                                                {m?.display_name}
+                                                            </Link>
+                                                            </li>
+                                                        ))
+                                                    }
                                             </ul>
                                         </div>
                                     ))}
